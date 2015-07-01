@@ -1,10 +1,10 @@
 'use strict';
 
-var fs = require('fs');
 var path = require('path');
 var each = require('async-each');
 var glob = require('globby');
 var extend = require('extend-shallow');
+var isValidGlob = require('is-valid-glob');
 var through = require('through2');
 
 /**
@@ -20,7 +20,6 @@ module.exports = function streamLoader(config, fn) {
   if (typeof config === 'function') {
     fn = config; config = {};
   }
-
   return function (patterns, options) {
     var opts = extend({loader: config}, options);
     return createStream(patterns, opts, fn);
@@ -59,16 +58,23 @@ function createStream(patterns, options, fn) {
     return stream;
   }
 
+  if (!isValidGlob(patterns)) {
+    throw new Error('stream-loader: invalid glob pattern: ' + patterns);
+  }
+
   glob(patterns, options, function (err, files) {
     if (err) return stream.emit('error', err);
 
     each(files, function (fp, next) {
       toObject(fp, options, fn, function (err, file) {
-        if (err) return stream.emit('error', err);
-
+        if (err) {
+          // handle errors from the loader callback
+          stream.emit('error', err);
+          return next(err);
+        }
         stream.write(file);
         next();
-      })
+      });
     }, function (err) {
       if (err) return stream.emit('error', err);
     });
