@@ -1,26 +1,43 @@
-# vinyl-loader [![NPM version](https://badge.fury.io/js/vinyl-loader.svg)](http://badge.fury.io/js/vinyl-loader)
+# stream-loader [![NPM version](https://badge.fury.io/js/stream-loader.svg)](http://badge.fury.io/js/stream-loader)
 
-> loader-cache compatible loader that loads templates as vinyl files.
+> create a read stream from a glob of files. can be used as a loader-cache loader, or by itself as an a-la-carte replacement or addition to vinyl src.
 
 ## Install
 
 Install with [npm](https://www.npmjs.com/)
 
 ```sh
-$ npm i vinyl-loader --save
+$ npm i stream-loader --save
 ```
 
 ## Usage
 
 ```js
-var loader = require('vinyl-loader');
+var loader = require('stream-loader');
 var dest = require('dest');
 
 var src = loader();
 src('*.js')
   .pipe(jshint())
   .pipe(minify())
-  .pipe(dest('dist/'))
+  .pipe(dest('dist/'));
+```
+
+## with vinyl
+
+convert stream-loader files into vinyl files
+
+```js
+var File = require('vinyl');
+
+var src = loader(function (err, file, cb) {
+  return cb(null, new File(file));
+});
+
+src('*.js')
+  .pipe(jshint())
+  .pipe(minify())
+  .pipe(dest('dist/'));
 ```
 
 ## API
@@ -41,7 +58,7 @@ $ npm i -d && npm test
 
 ## Contributing
 
-Pull requests and stars are always welcome. For bugs and feature requests, [please create an issue](https://github.com/jonschlinkert/vinyl-loader/issues/new)
+Pull requests and stars are always welcome. For bugs and feature requests, [please create an issue](https://github.com/jonschlinkert/stream-loader/issues/new)
 
 ## Author
 
