@@ -19,18 +19,34 @@
   "scripts": {
     "test": "mocha"
   },
+  "keywords": [
+    "async",
+    "file",
+    "fs",
+    "glob",
+    "load",
+    "loader",
+    "object",
+    "pattern",
+    "src",
+    "stream",
+    "vinyl"
+  ],
   "dependencies": {
     "async-each": "^0.1.6",
     "extend-shallow": "^2.0.0",
     "globby": "^2.1.0",
-    "through2": "^2.0.0",
-    "vinyl": "^0.5.0"
+    "is-valid-glob": "^0.1.0",
+    "through2": "^2.0.0"
   },
   "devDependencies": {
     "del": "^1.2.0",
     "dest": "^0.1.1",
+    "graceful-fs": "^4.1.2",
     "gulp": "^3.9.0",
-    "mocha": "*"
-  },
-  "keywords": []
+    "gulp-jshint": "^1.11.1",
+    "jshint-stylish": "^2.0.1",
+    "mocha": "^2.2.5",
+    "vinyl": "^0.5.0"
+  }
 }

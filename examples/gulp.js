@@ -14,5 +14,5 @@ gulp.src('*.js')
   .pipe(gulp.src('*.json'))
   .pipe(src('fixtures/*.txt'))
   .pipe(src('fixtures/*.md'))
-  .pipe(contents({}))
+  .pipe(contents())
   .pipe(gulp.dest('actual/'));
