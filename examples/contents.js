@@ -1,7 +1,11 @@
+'use strict';
+
 var through = require('through2');
 var fs = require('graceful-fs');
 
 module.exports = function contents(options) {
+  options = options || {};
+
   return through.obj(function (file, enc, cb) {
     fs.lstat(file.path, function (err, stats) {
       if (err) return cb(err);
@@ -20,8 +24,12 @@ module.exports = function contents(options) {
         });
       }
 
-      file.contents = fs.createReadStream(file.path);
-      return cb(err, file);
+      try {
+        file.contents = fs.createReadStream(file.path);
+        return cb(null, file);
+      } catch (err) {
+        return cb(err);
+      }
     });
   });
 };
