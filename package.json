@@ -1,0 +1,36 @@
+{
+  "name": "vinyl-loader",
+  "description": "loader-cache compatible loader that loads templates as vinyl files.",
+  "version": "0.1.0",
+  "homepage": "https://github.com/jonschlinkert/vinyl-loader",
+  "author": "Jon Schlinkert (https://github.com/jonschlinkert)",
+  "repository": "jonschlinkert/vinyl-loader",
+  "bugs": {
+    "url": "https://github.com/jonschlinkert/vinyl-loader/issues"
+  },
+  "license": "MIT",
+  "files": [
+    "index.js"
+  ],
+  "main": "index.js",
+  "engines": {
+    "node": ">=0.10.0"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "dependencies": {
+    "async-each": "^0.1.6",
+    "extend-shallow": "^2.0.0",
+    "globby": "^2.1.0",
+    "through2": "^2.0.0",
+    "vinyl": "^0.5.0"
+  },
+  "devDependencies": {
+    "del": "^1.2.0",
+    "dest": "^0.1.1",
+    "gulp": "^3.9.0",
+    "mocha": "*"
+  },
+  "keywords": []
+}
