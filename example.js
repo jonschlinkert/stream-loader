@@ -1,8 +1,10 @@
 'use strict';
 
+var fs = require('fs');
 var through = require('through2');
 var dest = require('dest');
 var File = require('vinyl');
+var contents = require('./contents');
 var loader = require('./');
 
 /**
@@ -14,28 +16,31 @@ var src = loader(function (err, file, cb) {
     return cb(err);
   });
 
-  // console.error(file);
+  console.error(file);
   return cb(null, new File(file));
 });
 
 // var read = require('./src');
 
-// read('*.json')
-//   .pipe(src('*.js'))
-//   .pipe(src('*.txt', {cwd: 'fixtures'}))
-//   .pipe(src('*.md', {cwd: 'fixtures'}))
+src('*.json')
+  .pipe(src('*.js'))
+  .pipe(contents({}))
+  .pipe(src('*.txt', {cwd: 'fixtures'}))
+  .pipe(src('*.md', {cwd: 'fixtures'}))
+  .pipe(through.obj(function (file, enc, cb) {
+    console.log(file.path);
+    this.push(file);
+    cb();
+  }))
+  .pipe(dest('actual/'));
+
+
+// src('*.js')
+//   .pipe(contents({}))
 //   .pipe(through.obj(function (file, enc, cb) {
-//     console.log(file.path);
+//     // console.log(file.path);
 //     this.push(file);
 //     cb();
 //   }))
 //   .pipe(dest('actual/'));
 
-src([])
-  .pipe(src('*.js'))
-  .pipe(through.obj(function (file, enc, cb) {
-    // console.log(file.path);
-    this.push(file);
-    cb();
-  }))
-  .pipe(dest('actual/'));
