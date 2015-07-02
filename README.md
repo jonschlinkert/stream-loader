@@ -25,7 +25,7 @@ src('*.js')
 
 ## with vinyl
 
-Load files as vinyl files.
+Load files as vinyl files (WIP)
 
 ```js
 var loader = require('stream-loader');
