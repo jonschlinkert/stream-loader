@@ -2,9 +2,9 @@
 
 require('jshint-stylish');
 var jshint = require('gulp-jshint');
-var contents = require('./contents');
 var toVinyl = require('./to-vinyl');
 var debug = require('./debug');
+var contents = require('../contents');
 var loader = require('..');
 
 /**

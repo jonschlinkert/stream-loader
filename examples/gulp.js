@@ -1,9 +1,9 @@
 'use strict';
 
 var gulp = require('gulp');
-var loader = require('..');
-var contents = require('./contents');
 var toVinyl = require('./to-vinyl');
+var contents = require('../contents');
+var loader = require('..');
 
 /**
  * convert stream-loader files into vinyl files

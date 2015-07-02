@@ -16,7 +16,7 @@ var through = require('through2');
  * @return {Function} Function for loading a glob of files.
  */
 
-module.exports = function streamLoader(config, fn) {
+function streamLoader(config, fn) {
   if (typeof config === 'function') {
     fn = config; config = {};
   }
@@ -24,7 +24,7 @@ module.exports = function streamLoader(config, fn) {
     var opts = extend({loader: config}, options);
     return createStream(patterns, opts, fn);
   };
-};
+}
 
 /**
  * Create a src stream from the given glob `patterns`,
@@ -123,3 +123,15 @@ function toObject(filepath, options, fn, callback) {
 function arrayify(val) {
   return val = Array.isArray(val) ? val : [val];
 }
+
+/**
+ * Expose `streamLoader`
+ */
+
+module.exports = streamLoader;
+
+/**
+ * Expose `streamLoader.contents`
+ */
+
+module.exports.contents = require('./contents');

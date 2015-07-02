@@ -2,8 +2,8 @@
 
 var dest = require('dest');
 var debug = require('./debug');
-var contents = require('./contents');
 var toVinyl = require('./to-vinyl');
+var contents = require('../contents');
 var loader = require('..');
 
 /**

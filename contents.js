@@ -7,6 +7,7 @@ module.exports = function contents(options) {
   options = options || {};
 
   return through.obj(function (file, enc, cb) {
+    // todo: always add stats
     fs.lstat(file.path, function (err, stats) {
       if (err) return cb(err);
 
