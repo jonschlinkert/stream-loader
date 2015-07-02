@@ -39,8 +39,18 @@ function streamLoader(config, fn) {
 function createStream(patterns, options, fn) {
   patterns = arrayify(patterns);
 
+  var isReading = false;
+
   // create the stream
   var stream = through.obj();
+  stream.on('pipe', function (src) {
+    isReading = true;
+    src.on('end', function () {
+      isReading = false;
+      stream.end();
+    });
+  });
+
   var pass = through.obj();
 
   // if a loader callback is passed, bind the stream
@@ -77,7 +87,9 @@ function createStream(patterns, options, fn) {
       });
     }, function (err) {
       if (err) return stream.emit('error', err);
-      stream.end();
+      if (!isReading) {
+        stream.end();
+      }
     });
   });
 

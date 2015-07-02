@@ -79,16 +79,18 @@ describe('loader', function () {
       cb(null, new File(file));
     });
 
+    var files = {};
     gulp.src('*.js')
       .pipe(src('fixtures/*.txt'))
       .pipe(src('fixtures/*.md'))
       .pipe(through.obj(function (file, enc, cb) {
-        console.log(file.path);
+        files[file.path] = file;
         this.push(file);
         cb();
       }))
       .pipe(dest('foo'))
       .on('end', function() {
+        assert.equal(Object.keys(files).length, 9);
         del('foo', done);
       })
   });
