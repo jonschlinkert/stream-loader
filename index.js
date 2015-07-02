@@ -2,8 +2,8 @@
 
 var path = require('path');
 var each = require('async-each');
-var glob = require('globby');
 var extend = require('extend-shallow');
+var glob = require('globby');
 var isValidGlob = require('is-valid-glob');
 var through = require('through2');
 

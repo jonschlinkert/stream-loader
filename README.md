@@ -25,11 +25,11 @@ src('*.js')
 
 ## with vinyl
 
-convert stream-loader files into vinyl files
+Load files as vinyl files.
 
 ```js
+var loader = require('stream-loader');
 var File = require('vinyl');
-
 var src = loader(function (err, file, cb) {
   return cb(null, new File(file));
 });
@@ -37,6 +37,7 @@ var src = loader(function (err, file, cb) {
 src('*.js')
   .pipe(jshint())
   .pipe(minify())
+  .pipe(loader.contents())
   .pipe(dest('dist/'));
 ```
 
