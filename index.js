@@ -77,6 +77,7 @@ function createStream(patterns, options, fn) {
       });
     }, function (err) {
       if (err) return stream.emit('error', err);
+      stream.end();
     });
   });
 
@@ -108,7 +109,7 @@ function toObject(filepath, options, fn, callback) {
   file.options.globPath = globPath;
 
   if (typeof fn === 'function') {
-    return fn(null, file, callback);
+    return fn(file, options, callback);
   }
   return callback(null, file);
 }
