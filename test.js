@@ -21,32 +21,34 @@ describe('loader', function () {
     assert.equal(typeof loader(), 'function');
   });
 
-  it('should read a glob of files:', function () {
+  it('should read a glob of files:', function (done) {
     var src = loader();
     src('fixtures/*.txt')
       .pipe(through.obj(function (file, enc, cb) {
         assert.equal(typeof file.path, 'string');
-        assert.equal(Buffer.isBuffer(file.contents), true);
+        assert.equal(Buffer.isBuffer(file.contents), false);
         this.push(file);
         cb();
       }))
+      .pipe(drain(done));
   });
 
-  it('should pass options to `glob`:', function () {
+  it('should pass options to `glob`:', function (done) {
     var src = loader();
     src('*.txt', {cwd: 'fixtures'})
       .pipe(through.obj(function (file, enc, cb) {
         assert.equal(typeof file.path, 'string');
-        assert.equal(Buffer.isBuffer(file.contents), true);
+        assert.equal(Buffer.isBuffer(file.contents), false);
         this.push(file);
         cb();
       }))
+      .pipe(drain(done));
   });
 
-  it('should take a callback on the loader:', function () {
-    var src = loader(function (file, options) {
+  it('should take a callback on the loader:', function (done) {
+    var src = loader(function (file, options, cb) {
       file.foo = 'bar';
-      return file;
+      cb(null, file)
     });
 
     src('fixtures/*.txt')
@@ -55,38 +57,69 @@ describe('loader', function () {
         this.push(file);
         cb();
       }))
+      .pipe(drain(done));
   });
 
-  it('should convert the file to a vinyl File object:', function () {
-    var src = loader(function (file, options) {
-      return new File(file);
+  it('should convert the file to a vinyl File object:', function (done) {
+    var src = loader(function (file, options, cb) {
+      cb(null, new File(file));
     });
 
     src('fixtures/*.txt')
       .pipe(through.obj(function (file, enc, cb) {
-        assert.equal(Buffer.isBuffer(file.contents), true);
+        assert.equal(file instanceof File, true);
         this.push(file);
         cb();
       }))
+      .pipe(drain(done));
   });
 
   it('should push files into a vinyl src stream:', function (done) {
-    var src = loader(function (file, options) {
-      return new File(file);
+    var src = loader(function (file, options, cb) {
+      cb(null, new File(file));
     });
 
+    var files = {};
     gulp.src('*.js')
       .pipe(src('fixtures/*.txt'))
       .pipe(src('fixtures/*.md'))
       .pipe(through.obj(function (file, enc, cb) {
-        console.log(file.path);
+        files[file.path] = file;
         this.push(file);
         cb();
       }))
-
       .pipe(dest('foo'))
       .on('end', function() {
-        del('temp', done);
+        assert.equal(Object.keys(files).length, 9);
+        del('foo', done);
       })
   });
+
+  it('should passthrough files when no pattern is given', function (done) {
+    var src = loader();
+
+    var files1 = [], files2 = [];
+    src('fixtures/*.txt')
+      .pipe(through.obj(function (file, enc, cb) {
+        files1.push(file);
+        cb(null, file);
+      }))
+      .pipe(src([]))
+      .pipe(through.obj(function (file, enc, cb) {
+        files2.push(file);
+        cb(null, file);
+      }))
+      .on('end', function () {
+        assert.deepEqual(files1, files2);
+      })
+      .pipe(drain(done));
+  });
 });
+
+// make sure all the data is pulled through a stream
+function drain (done) {
+  var stream = through.obj();
+  stream.on('end', done);
+  stream.resume();
+  return stream;
+}
