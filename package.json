@@ -1,7 +1,7 @@
 {
   "name": "stream-loader",
   "description": "create a read stream from a glob of files. can be used as a loader-cache loader, or by itself as an a-la-carte replacement or addition to vinyl src.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "homepage": "https://github.com/jonschlinkert/stream-loader",
   "author": "Jon Schlinkert (https://github.com/jonschlinkert)",
   "repository": "jonschlinkert/stream-loader",
