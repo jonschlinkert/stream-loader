@@ -2,7 +2,7 @@
 
 var File = require('vinyl');
 
-module.exports = function toVinyl(err, file, cb) {
+module.exports = function toVinyl(file, options, cb) {
   this.on('error', function (err) {
     return cb(err);
   });
