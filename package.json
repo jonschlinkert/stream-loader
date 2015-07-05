@@ -22,8 +22,12 @@
   "dependencies": {
     "async-each": "^0.1.6",
     "extend-shallow": "^2.0.0",
+    "glob-parent": "^1.2.0",
     "globby": "^2.1.0",
+    "is-extendable": "^0.1.1",
     "is-valid-glob": "^0.1.0",
+    "kind-of": "^2.0.0",
+    "mixin-object": "^2.0.0",
     "through2": "^2.0.0"
   },
   "devDependencies": {

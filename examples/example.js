@@ -1,5 +1,6 @@
 'use strict';
 
+var through = require('through2');
 var dest = require('dest');
 var utils = require('../lib/utils');
 var loader = require('..');
@@ -8,7 +9,12 @@ var loader = require('..');
  * Example usage
  */
 
-var src = loader(utils.toVinyl);
+var src = loader(function (options) {
+  return through.obj(function (file, enc, cb) {
+    this.push(utils.toVinyl(file));
+    return cb();
+  })
+});
 
 src('*.json')
   .pipe(src('*.js'))

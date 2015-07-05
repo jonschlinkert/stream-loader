@@ -76,30 +76,34 @@ describe('loader', function () {
       .pipe(utils.drain(done));
   });
 
-  it('should add the contents property to a file object:', function (done) {
-    var src = loader(function (file, options, cb) {
-      cb(null, new File(file));
-    });
+  it.only('should add the contents property to a file object:', function (done) {
+    var src = loader(utils.toVinyl);
 
-    src('fixtures/*.txt')
-      .pipe(utils.contents())
+    src('fixtures/**/*.*')
+      .pipe(src('node_modules/gulp/**/*.js'))
+      .pipe(src('fixtures/*.txt'))
+      // // .pipe(utils.contents())
+      // .pipe(src('fixtures/*.md'))
+      // .pipe(through.obj(function (file, enc, cb) {
+      //   if (path.extname(file.path) === '.md') {
+      //     assert.equal(Buffer.isBuffer(file.contents), true);
+      //   }
+      //   if (path.extname(file.path) === '.txt') {
+      //     assert.equal(Buffer.isBuffer(file.contents), true);
+      //   }
+      //   this.push(file);
+      //   return cb();
+      // }))
+      // .pipe(through.obj(function (file, enc, cb) {
+      //   assert.equal(Buffer.isBuffer(file.contents), true);
+      //   this.push(file);
+      //   return cb();
+      // }))
       .pipe(through.obj(function (file, enc, cb) {
-        assert.equal(Buffer.isBuffer(file.contents), true);
+        // console.log(file.path)
         this.push(file);
-        cb();
+        return cb();
       }))
-      .pipe(src('fixtures/*.md'))
-      .pipe(through.obj(function (file, enc, cb) {
-        if (path.extname(file.path) === '.md') {
-          assert.equal(Buffer.isBuffer(file.contents), false);
-        }
-        if (path.extname(file.path) === '.txt') {
-          assert.equal(Buffer.isBuffer(file.contents), true);
-        }
-        this.push(file);
-        cb();
-      }))
-      .pipe(utils.contents())
       .pipe(utils.drain(done));
   });
 

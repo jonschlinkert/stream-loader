@@ -1,9 +1,10 @@
 'use strict';
 
-var path = require('path');
-var each = require('async-each');
+var fs = require('graceful-fs');
+var async = require('async');
 var extend = require('extend-shallow');
 var glob = require('globby');
+var symlinks = require('file-symlinks');
 var isValidGlob = require('is-valid-glob');
 var through = require('through2');
 var utils = require('./lib/utils');
@@ -39,12 +40,12 @@ function streamLoader(config, fn) {
  */
 
 function createStream(patterns, options, fn) {
-  patterns = arrayify(patterns);
-
+  var opts = extend({}, options.loader, options);
   var isReading = false;
 
   // create the stream
   var stream = through.obj();
+
   stream.on('pipe', function (src) {
     isReading = true;
     src.on('end', function () {
@@ -64,7 +65,7 @@ function createStream(patterns, options, fn) {
 
   // if no patterns were actually passed, allow the next
   // plugin to keep processing
-  if (!patterns.length) {
+  if (!patterns || !patterns.length) {
     process.nextTick(pass.end.bind(pass));
     stream.pipe(pass);
     return stream;
@@ -74,16 +75,14 @@ function createStream(patterns, options, fn) {
     throw new Error('stream-loader: invalid glob pattern: ' + patterns);
   }
 
-  glob(patterns, options, function (err, files) {
+  glob(patterns, opts, function (err, files) {
     if (err) return stream.emit('error', err);
 
-    each(files, function (fp, next) {
-      toObject(fp, options, fn, function (err, file) {
-        if (err) return stream.emit('error', err);
-
-        stream.write(file);
+    async.each(files, function (fp, next) {
+      stream.on('write', function () {
         next();
       });
+      stream.write({options: options, orig: fp});
     }, function (err) {
       if (err) return stream.emit('error', err);
       if (!isReading) {
@@ -92,49 +91,33 @@ function createStream(patterns, options, fn) {
     });
   });
 
-  stream.pipe(pass);
-  return stream;
-}
+  var result = stream
+    .pipe(utils.toFile(opts))
+    .pipe(utils.stats(opts))
 
-/**
- * Create a `file` object from the given `filepath`, `options`,
- * transform `fn` and `callback`
- *
- * @param  {String} `filepath`
- * @param  {Object} `options`
- * @param  {Function} fn
- * @param  {Function} `callback`
- * @return {Object}
- */
-
-function toObject(filepath, options, fn, callback) {
-  var globPath = filepath;
-
-  if (options.cwd && typeof options.cwd === 'string') {
-    filepath = path.join(options.cwd, filepath);
+  if (opts.read === true) {
+    result = result.pipe(utils.contents(opts));
   }
-
-  var file = { path: filepath };
-  file.cwd = options.cwd || '';
-  file.options = options;
-  file.options.globPath = globPath;
 
   if (typeof fn === 'function') {
-    return fn(file, options, callback);
+    result = result.pipe(fn(opts));
   }
 
-  return callback(null, file);
-}
+  // result = result.pipe(through.obj(function (file, enc, cb) {
+  //   var temp = this;
+  //   if (typeof fn === 'function') {
+  //     fn(file, options, function (err, data) {
+  //       // console.log(data)
+  //       temp.push(data);
+  //       return cb();
+  //     });
+  //   } else {
+  //     this.push(file);
+  //     return cb();
+  //   }
+  // }));
 
-/**
- * Cast the given value to an array.
- *
- * @param  {*} val
- * @return {Array}
- */
-
-function arrayify(val) {
-  return val = Array.isArray(val) ? val : [val];
+  return result.pipe(pass);
 }
 
 /**
