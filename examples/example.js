@@ -1,7 +1,6 @@
 'use strict';
 
 var dest = require('dest');
-var toVinyl = require('./to-vinyl');
 var utils = require('../lib/utils');
 var loader = require('..');
 
