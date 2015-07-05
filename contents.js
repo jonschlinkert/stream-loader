@@ -7,30 +7,24 @@ module.exports = function contents(options) {
   options = options || {};
 
   return through.obj(function (file, enc, cb) {
-    // todo: always add stats
-    fs.lstat(file.path, function (err, stats) {
-      if (err) return cb(err);
+    if (file.isDirectory()) {
+      return cb(null, file);
+    }
 
-      file.stat = stats;
-      if (file.isDirectory()) {
+    if (options.buffer !== false) {
+      return fs.readFile(file.path, function (err, data) {
+        if (err) return cb(err);
+
+        file.contents = data;
         return cb(null, file);
-      }
+      });
+    }
 
-      if (options.buffer !== false) {
-        return fs.readFile(file.path, function (err, data) {
-          if (err) return cb(err);
-
-          file.contents = data;
-          return cb(null, file);
-        });
-      }
-
-      try {
-        file.contents = fs.createReadStream(file.path);
-        return cb(null, file);
-      } catch (err) {
-        return cb(err);
-      }
-    });
+    try {
+      file.contents = fs.createReadStream(file.path);
+      return cb(null, file);
+    } catch (err) {
+      return cb(err);
+    }
   });
 };
