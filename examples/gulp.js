@@ -1,18 +1,17 @@
 'use strict';
 
 var gulp = require('gulp');
-var toVinyl = require('./to-vinyl');
-var contents = require('../contents');
+var utils = require('../lib/utils');
 var loader = require('..');
 
 /**
  * convert stream-loader files into vinyl files
  */
-var src = loader(toVinyl);
+var src = loader(utils.toVinyl);
 
 gulp.src('*.js')
   .pipe(gulp.src('*.json'))
   .pipe(src('fixtures/*.txt'))
   .pipe(src('fixtures/*.md'))
-  .pipe(contents())
+  .pipe(utils.contents())
   .pipe(gulp.dest('actual/'));

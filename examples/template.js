@@ -1,13 +1,11 @@
 'use strict';
 
 var dest = require('dest');
-var toVinyl = require('./to-vinyl');
 var utils = require('../lib/utils');
 var loader = require('..');
 
-/**
- * Example usage
- */
+var App = require('template');
+var app = new App();
 
 var src = loader(utils.toVinyl);
 
@@ -16,4 +14,5 @@ src('*.json')
   .pipe(src('fixtures/*.txt'))
   .pipe(src('fixtures/*.md'))
   .pipe(utils.contents())
-  .pipe(dest('actual/'))
+  .pipe(utils.debug())
+  .pipe(dest('actual/'));

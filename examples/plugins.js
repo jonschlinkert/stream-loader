@@ -2,23 +2,18 @@
 
 require('jshint-stylish');
 var jshint = require('gulp-jshint');
-var toVinyl = require('./to-vinyl');
-var debug = require('./debug');
-var contents = require('../contents');
+var utils = require('../lib/utils');
 var loader = require('..');
 
 /**
  * Convert files to vinyl files
  */
-var src = loader(toVinyl);
 
-/**
- * Example usage
- */
+var src = loader(utils.toVinyl);
+
 src('examples/*.js')
   .pipe(src('*.js'))
-  .pipe(contents())
+  .pipe(utils.contents())
   .pipe(jshint())
   .pipe(jshint.reporter('jshint-stylish'))
-  .pipe(debug());
-
+  .pipe(utils.debug());

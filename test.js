@@ -8,11 +8,13 @@
 'use strict';
 
 /* deps: mocha */
+var path = require('path');
 var assert = require('assert');
 var through = require('through2');
 var gulp = require('gulp');
 var File = require('vinyl');
 var loader = require('./');
+var utils = require('./lib/utils');
 var dest = require('dest');
 var del = require('del');
 
@@ -30,7 +32,7 @@ describe('loader', function () {
         this.push(file);
         cb();
       }))
-      .pipe(drain(done));
+      .pipe(utils.drain(done));
   });
 
   it('should pass options to `glob`:', function (done) {
@@ -42,7 +44,7 @@ describe('loader', function () {
         this.push(file);
         cb();
       }))
-      .pipe(drain(done));
+      .pipe(utils.drain(done));
   });
 
   it('should take a callback on the loader:', function (done) {
@@ -57,7 +59,7 @@ describe('loader', function () {
         this.push(file);
         cb();
       }))
-      .pipe(drain(done));
+      .pipe(utils.drain(done));
   });
 
   it('should convert the file to a vinyl File object:', function (done) {
@@ -71,7 +73,34 @@ describe('loader', function () {
         this.push(file);
         cb();
       }))
-      .pipe(drain(done));
+      .pipe(utils.drain(done));
+  });
+
+  it('should add the contents property to a file object:', function (done) {
+    var src = loader(function (file, options, cb) {
+      cb(null, new File(file));
+    });
+
+    src('fixtures/*.txt')
+      .pipe(utils.contents())
+      .pipe(through.obj(function (file, enc, cb) {
+        assert.equal(Buffer.isBuffer(file.contents), true);
+        this.push(file);
+        cb();
+      }))
+      .pipe(src('fixtures/*.md'))
+      .pipe(through.obj(function (file, enc, cb) {
+        if (path.extname(file.path) === '.md') {
+          assert.equal(Buffer.isBuffer(file.contents), false);
+        }
+        if (path.extname(file.path) === '.txt') {
+          assert.equal(Buffer.isBuffer(file.contents), true);
+        }
+        this.push(file);
+        cb();
+      }))
+      .pipe(utils.contents())
+      .pipe(utils.drain(done));
   });
 
   it('should push files into a vinyl src stream:', function (done) {
@@ -88,11 +117,11 @@ describe('loader', function () {
         this.push(file);
         cb();
       }))
-      .pipe(dest('foo'))
+      .pipe(dest('actual'))
       .on('end', function() {
-        assert.equal(Object.keys(files).length, 9);
-        del('foo', done);
-      })
+        assert.equal(Object.keys(files).length > 1, true);
+        del('actual', done);
+      });
   });
 
   it('should passthrough files when no pattern is given', function (done) {
@@ -112,14 +141,6 @@ describe('loader', function () {
       .on('end', function () {
         assert.deepEqual(files1, files2);
       })
-      .pipe(drain(done));
+      .pipe(utils.drain(done));
   });
 });
-
-// make sure all the data is pulled through a stream
-function drain (done) {
-  var stream = through.obj();
-  stream.on('end', done);
-  stream.resume();
-  return stream;
-}
