@@ -6,6 +6,7 @@ var extend = require('extend-shallow');
 var glob = require('globby');
 var isValidGlob = require('is-valid-glob');
 var through = require('through2');
+var utils = require('./lib/utils');
 
 /**
  * Stream loader that returns a function for creating a stream
@@ -20,8 +21,9 @@ function streamLoader(config, fn) {
   if (typeof config === 'function') {
     fn = config; config = {};
   }
+
   return function (patterns, options) {
-    var opts = extend({loader: config}, options);
+    var opts = extend({ loader: config }, options);
     return createStream(patterns, opts, fn);
   };
 }
@@ -60,8 +62,8 @@ function createStream(patterns, options, fn) {
     fn = fn.bind(stream);
   }
 
-  // if no patterns were actually passed, allow
-  // the next plugin to keep processing
+  // if no patterns were actually passed, allow the next
+  // plugin to keep processing
   if (!patterns.length) {
     process.nextTick(pass.end.bind(pass));
     stream.pipe(pass);
@@ -77,11 +79,8 @@ function createStream(patterns, options, fn) {
 
     each(files, function (fp, next) {
       toObject(fp, options, fn, function (err, file) {
-        if (err) {
-          // handle errors from the loader callback
-          stream.emit('error', err);
-          return next(err);
-        }
+        if (err) return stream.emit('error', err);
+
         stream.write(file);
         next();
       });
@@ -123,6 +122,7 @@ function toObject(filepath, options, fn, callback) {
   if (typeof fn === 'function') {
     return fn(file, options, callback);
   }
+
   return callback(null, file);
 }
 
@@ -147,4 +147,4 @@ module.exports = streamLoader;
  * Expose `streamLoader.contents`
  */
 
-module.exports.contents = require('./contents');
+module.exports.contents = utils.contents;
