@@ -1,6 +1,7 @@
 'use strict';
 
 var through = require('through2');
+var contents = require('file-contents');
 var dest = require('dest');
 var utils = require('../lib/utils');
 var loader = require('..');
@@ -11,14 +12,29 @@ var loader = require('..');
 
 var src = loader(function (options) {
   return through.obj(function (file, enc, cb) {
-    this.push(utils.toVinyl(file));
+    // console.log(file);
+    this.push(file);
     return cb();
   })
 });
 
-src('*.json')
-  .pipe(src('*.js'))
+// src('fixtures/*.md')
+// src('*.json')
+src('*.js')
+  // .pipe(src('*.js'))
   .pipe(src('fixtures/*.txt'))
   .pipe(src('fixtures/*.md'))
-  .pipe(utils.contents())
-  .pipe(dest('actual/'))
+  // .pipe(contents())
+  // .pipe(through.obj(function (file, enc, cb) {
+  //   console.log(file)
+  //   this.push(file);
+  //   return cb();
+  // }))
+  .on('error', console.error)
+  .on('data', function (file) {
+    console.log(file.path);
+  })
+  .on('end', function () {
+    // process.exit();
+  })
+  // .pipe(dest('actual/'))

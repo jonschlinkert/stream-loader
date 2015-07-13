@@ -1,12 +1,17 @@
 'use strict';
 
 var fs = require('graceful-fs');
+var path = require('path');
 var async = require('async');
 var extend = require('extend-shallow');
-var glob = require('globby');
-var symlinks = require('file-symlinks');
+var globby = require('globby');
+var parent = require('glob-parent');
+// var symlinks = require('file-symlinks');
+// var contents = require('file-contents');
+// var stats = require('file-stats');
 var isValidGlob = require('is-valid-glob');
 var through = require('through2');
+var File = require('vinyl');
 var utils = require('./lib/utils');
 
 /**
@@ -22,6 +27,8 @@ function streamLoader(config, fn) {
   if (typeof config === 'function') {
     fn = config; config = {};
   }
+
+  fn = fn || utils.base;
 
   return function (patterns, options) {
     var opts = extend({ loader: config }, options);
@@ -41,19 +48,12 @@ function streamLoader(config, fn) {
 
 function createStream(patterns, options, fn) {
   var opts = extend({}, options.loader, options);
+  opts.cwd = opts.cwd || process.cwd();
+
   var isReading = false;
 
   // create the stream
   var stream = through.obj();
-
-  stream.on('pipe', function (src) {
-    isReading = true;
-    src.on('end', function () {
-      isReading = false;
-      stream.end();
-    });
-  });
-
   var pass = through.obj();
 
   // if a loader callback is passed, bind the stream
@@ -65,9 +65,16 @@ function createStream(patterns, options, fn) {
 
   // if no patterns were actually passed, allow the next
   // plugin to keep processing
-  if (!patterns || !patterns.length) {
+  if (!patterns.length) {
     process.nextTick(pass.end.bind(pass));
-    stream.pipe(pass);
+    stream = stream.pipe(pass);
+    stream.on('pipe', function (src) {
+      isReading = true;
+      src.on('end', function () {
+        isReading = false;
+        stream.end();
+      });
+    });
     return stream;
   }
 
@@ -75,49 +82,63 @@ function createStream(patterns, options, fn) {
     throw new Error('stream-loader: invalid glob pattern: ' + patterns);
   }
 
-  glob(patterns, opts, function (err, files) {
-    if (err) return stream.emit('error', err);
-
-    async.each(files, function (fp, next) {
-      stream.on('write', function () {
-        next();
-      });
-      stream.write({options: options, orig: fp});
-    }, function (err) {
+  process.nextTick(function () {
+    globby(patterns, function (err, files) {
       if (err) return stream.emit('error', err);
-      if (!isReading) {
-        stream.end();
-      }
+      var len = files.length;
+
+      process.nextTick(function () {
+        async.each(files, function (fp, next) {
+          stream.once('write', next);
+          stream.write(utils.toFile(fp, patterns, opts));
+          // next();
+        }, function (err) {
+          process.nextTick(function () {
+            if (!isReading) {
+              stream.end();
+            }
+          });
+        })
+
+        // files.forEach(function (fp, i) {
+        //   stream.write(utils.toFile(fp, patterns, opts));
+        //   // stream.emit('data', {
+        //   //   options: options,
+        //   //   path: fp,
+        //   //   orig: fp
+        //   // });
+        // });
+
+      });
+
+      process.nextTick(function () {
+        if (!isReading) {
+          stream.end();
+        }
+      });
     });
   });
 
   var result = stream
-    .pipe(utils.toFile(opts))
-    .pipe(utils.stats(opts))
+    // .pipe(utils.toVinyl())
+    // .pipe(utils.toFile(patterns, opts))
+    // .pipe(utils.toFileObject(patterns, opts))
+    // .pipe(symlinks(opts))
+    // .pipe(stats(opts))
+    // .pipe(contents(opts))
+    .pipe(fn(opts))
+    // .on('data', console.log);
 
-  if (opts.read === true) {
-    result = result.pipe(utils.contents(opts));
-  }
-
-  if (typeof fn === 'function') {
-    result = result.pipe(fn(opts));
-  }
-
-  // result = result.pipe(through.obj(function (file, enc, cb) {
-  //   var temp = this;
-  //   if (typeof fn === 'function') {
-  //     fn(file, options, function (err, data) {
-  //       // console.log(data)
-  //       temp.push(data);
-  //       return cb();
-  //     });
-  //   } else {
-  //     this.push(file);
-  //     return cb();
-  //   }
-  // }));
-
-  return result.pipe(pass);
+  result = result.pipe(pass);
+  result.on('pipe', function (src) {
+    isReading = true;
+    src.on('end', function () {
+      isReading = false;
+      result.resume();
+      result.end();
+    });
+  });
+  return result;
 }
 
 /**
@@ -131,3 +152,23 @@ module.exports = streamLoader;
  */
 
 module.exports.contents = utils.contents;
+
+
+module.exports.loader = function vinyl(options, fn) {
+  var opts = {loader: options || {}};
+  fn = fn || utils.property;
+
+  return through.obj(function (pattern, enc, cb) {
+    var stream = this;
+
+    glob(pattern, opts, function (err, files) {
+      if (err) return cb(err);
+
+      async.each(files, function (fp, next) {
+        stream.push(toFile(fp, opts, fn));
+        next();
+      }, cb);
+    });
+  });
+};
+
