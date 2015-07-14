@@ -3,9 +3,11 @@
 var fs = require('graceful-fs');
 var path = require('path');
 var async = require('async');
-var extend = require('extend-shallow');
 var globby = require('globby');
+var ms = require('merge-stream');
 var parent = require('glob-parent');
+var duplexify = require('duplexify');
+var extend = require('extend-shallow');
 // var symlinks = require('file-symlinks');
 // var contents = require('file-contents');
 // var stats = require('file-stats');
@@ -50,31 +52,24 @@ function createStream(patterns, options, fn) {
   var opts = extend({}, options.loader, options);
   opts.cwd = opts.cwd || process.cwd();
 
-  var isReading = false;
-
   // create the stream
   var stream = through.obj();
+  stream.setMaxListeners(0);
+
+  // passthrough stream used when stream is piped to
   var pass = through.obj();
+  pass.setMaxListeners(0);
 
   // if a loader callback is passed, bind the stream
   // and remove maxListeners
   if (typeof fn === 'function') {
-    stream.setMaxListeners(0);
     fn = fn.bind(stream);
   }
 
   // if no patterns were actually passed, allow the next
   // plugin to keep processing
   if (!patterns.length) {
-    process.nextTick(pass.end.bind(pass));
     stream = stream.pipe(pass);
-    stream.on('pipe', function (src) {
-      isReading = true;
-      src.on('end', function () {
-        isReading = false;
-        stream.end();
-      });
-    });
     return stream;
   }
 
@@ -82,44 +77,8 @@ function createStream(patterns, options, fn) {
     throw new Error('stream-loader: invalid glob pattern: ' + patterns);
   }
 
-  process.nextTick(function () {
-    globby(patterns, function (err, files) {
-      if (err) return stream.emit('error', err);
-      var len = files.length;
-
-      process.nextTick(function () {
-        async.each(files, function (fp, next) {
-          stream.once('write', next);
-          stream.write(utils.toFile(fp, patterns, opts));
-          // next();
-        }, function (err) {
-          process.nextTick(function () {
-            if (!isReading) {
-              stream.end();
-            }
-          });
-        })
-
-        // files.forEach(function (fp, i) {
-        //   stream.write(utils.toFile(fp, patterns, opts));
-        //   // stream.emit('data', {
-        //   //   options: options,
-        //   //   path: fp,
-        //   //   orig: fp
-        //   // });
-        // });
-
-      });
-
-      process.nextTick(function () {
-        if (!isReading) {
-          stream.end();
-        }
-      });
-    });
-  });
-
-  var result = stream
+  // make our pipeline of plugins
+  stream = stream
     // .pipe(utils.toVinyl())
     // .pipe(utils.toFile(patterns, opts))
     // .pipe(utils.toFileObject(patterns, opts))
@@ -129,16 +88,40 @@ function createStream(patterns, options, fn) {
     .pipe(fn(opts))
     // .on('data', console.log);
 
-  result = result.pipe(pass);
-  result.on('pipe', function (src) {
+  // create an output stream that will handle passthough streams
+  var outputstream = duplexify.obj(pass, ms(stream, pass));
+  outputstream.setMaxListeners(0);
+
+  // handle when the outputstream is being piped
+  // to (this ensures that we don't close)
+  // the stream too soon
+  var isReading = false;
+  outputstream.on('pipe', function (src) {
     isReading = true;
     src.on('end', function () {
       isReading = false;
-      result.resume();
-      result.end();
+      outputstream.end();
     });
   });
-  return result;
+
+  // when our stream ends, end the outputstream
+  stream.on('end', function () {
+    if (!isReading) {
+      outputstream.end();
+    }
+  });
+
+  // find the files and write them to the stream
+  globby(patterns, function (err, files) {
+    if (err) return stream.emit('error', err);
+    var len = files.length, i = 0;
+    while (len--) {
+      stream.write(utils.toFile(files[i++], patterns, opts));
+    }
+    stream.end();
+  });
+
+  return outputstream;
 }
 
 /**
