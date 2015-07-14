@@ -1,7 +1,7 @@
 'use strict';
 
 var through = require('through2');
-var contents = require('file-contents');
+// var contents = require('file-contents');
 var dest = require('dest');
 var utils = require('../lib/utils');
 var loader = require('..');
@@ -12,7 +12,7 @@ var loader = require('..');
 
 var src = loader(function (options) {
   return through.obj(function (file, enc, cb) {
-    // console.log(file);
+    // console.log('fn', file.path);
     this.push(file);
     return cb();
   })
@@ -35,6 +35,6 @@ src('*.js')
     console.log(file.path);
   })
   .on('end', function () {
-    // process.exit();
+    console.log('example done');
   })
   // .pipe(dest('actual/'))
