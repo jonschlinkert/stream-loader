@@ -101,29 +101,3 @@ function createStream(patterns, options, fn) {
  */
 
 module.exports = streamLoader;
-
-/**
- * Expose `streamLoader.contents`
- */
-
-module.exports.contents = utils.contents;
-
-
-module.exports.loader = function vinyl(options, fn) {
-  var opts = {loader: options || {}};
-  fn = fn || utils.property;
-
-  return through.obj(function (pattern, enc, cb) {
-    var stream = this;
-
-    glob(pattern, opts, function (err, files) {
-      if (err) return cb(err);
-
-      async.each(files, function (fp, next) {
-        stream.push(toFile(fp, opts, fn));
-        next();
-      }, cb);
-    });
-  });
-};
-
