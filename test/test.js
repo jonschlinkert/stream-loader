@@ -29,6 +29,7 @@ describe('loader', function () {
   it('should read a glob of files:', function (done) {
     var src = loader(function (options) {
       return through.obj(function (file, enc, cb) {
+        this.push(file);
         return cb();
       })
     });
@@ -46,6 +47,7 @@ describe('loader', function () {
   it('should pass options to `glob`:', function (done) {
     var src = loader(function (options) {
       return through.obj(function (file, enc, cb) {
+        this.push(file);
         return cb();
       });
     });
@@ -151,6 +153,7 @@ describe('loader', function () {
   it('should passthrough files when no pattern is given', function (done) {
     var src = loader(function (options) {
       return through.obj(function (file, enc, cb) {
+        this.push(file);
         return cb();
       })
     });
