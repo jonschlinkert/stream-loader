@@ -17,7 +17,7 @@ var vfs = require('vinyl-fs');
 var dest = require('dest');
 var del = require('del');
 
-var contents = require('file-contents');
+// var contents = require('file-contents');
 var utils = require('../lib/utils');
 var loader = require('../');
 
@@ -112,7 +112,7 @@ describe('loader', function () {
       .pipe(src('fixtures/**/*.txt'))
       .pipe(src('fixtures/**/*.md'))
       .pipe(src('fixtures/**/*.js'))
-      .pipe(contents({read: false}))
+      // .pipe(contents({read: false}))
       .pipe(through.obj(function (file, enc, cb) {
         i++;
         this.push(file);
