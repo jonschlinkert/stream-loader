@@ -1,11 +1,10 @@
 'use strict';
 
 var async = require('async');
-var ms = require('merge-stream');
 var through = require('through2');
-var duplexify = require('duplexify');
 var extend = require('extend-shallow');
 var utils = require('../../lib/utils');
+var src = require('src-stream');
 
 function streamLoader(config, fn) {
   if (typeof config === 'function') {
@@ -27,9 +26,6 @@ function createStream(patterns, options, fn) {
   var stream = through.obj();
   stream.setMaxListeners(0);
 
-  var pass = through.obj();
-  pass.setMaxListeners(0);
-
   // if a loader callback is passed, bind the stream
   // and remove maxListeners
   if (typeof fn === 'function') {
@@ -39,30 +35,12 @@ function createStream(patterns, options, fn) {
   // if no patterns were actually passed, allow the next
   // plugin to keep processing
   if (!patterns.length) {
-    stream = stream.pipe(pass);
-    return stream;
+    process.nextTick(stream.end.bind(stream));
+    return src(stream);
   }
 
   stream = stream
     .pipe(fn(opts));
-
-  var outputstream = duplexify.obj(pass, ms(stream, pass));
-  outputstream.setMaxListeners(0);
-
-  var isReading = false;
-  outputstream.on('pipe', function (src) {
-    isReading = true;
-    src.on('end', function () {
-      isReading = false;
-      outputstream.end();
-    });
-  });
-
-  stream.on('end', function () {
-    if (!isReading) {
-      outputstream.end();
-    }
-  });
 
   var count = 0;
   var max = opts.max || 10;
@@ -77,7 +55,7 @@ function createStream(patterns, options, fn) {
     }
   }
   process.nextTick(write);
-  return outputstream;
+  return src(stream);
 }
 
 /**

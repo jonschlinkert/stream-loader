@@ -4,13 +4,12 @@ var fs = require('graceful-fs');
 var path = require('path');
 var async = require('async');
 var globby = require('globby');
-var ms = require('merge-stream');
 var parent = require('glob-parent');
-var duplexify = require('duplexify');
 var extend = require('extend-shallow');
 // var symlinks = require('file-symlinks');
 // var contents = require('file-contents');
 // var stats = require('file-stats');
+var src = require('src-stream');
 var isValidGlob = require('is-valid-glob');
 var through = require('through2');
 var File = require('vinyl');
@@ -56,10 +55,6 @@ function createStream(patterns, options, fn) {
   var stream = through.obj();
   stream.setMaxListeners(0);
 
-  // passthrough stream used when stream is piped to
-  var pass = through.obj();
-  pass.setMaxListeners(0);
-
   // if a loader callback is passed, bind the stream
   // and remove maxListeners
   if (typeof fn === 'function') {
@@ -69,8 +64,8 @@ function createStream(patterns, options, fn) {
   // if no patterns were actually passed, allow the next
   // plugin to keep processing
   if (!patterns.length) {
-    stream = stream.pipe(pass);
-    return stream;
+    process.nextTick(stream.end.bind(stream));
+    return src(stream);
   }
 
   if (!isValidGlob(patterns)) {
@@ -88,29 +83,6 @@ function createStream(patterns, options, fn) {
     .pipe(fn(opts))
     // .on('data', console.log);
 
-  // create an output stream that will handle passthough streams
-  var outputstream = duplexify.obj(pass, ms(stream, pass));
-  outputstream.setMaxListeners(0);
-
-  // handle when the outputstream is being piped
-  // to (this ensures that we don't close)
-  // the stream too soon
-  var isReading = false;
-  outputstream.on('pipe', function (src) {
-    isReading = true;
-    src.on('end', function () {
-      isReading = false;
-      outputstream.end();
-    });
-  });
-
-  // when our stream ends, end the outputstream
-  stream.on('end', function () {
-    if (!isReading) {
-      outputstream.end();
-    }
-  });
-
   // find the files and write them to the stream
   globby(patterns, function (err, files) {
     if (err) return stream.emit('error', err);
@@ -121,7 +93,7 @@ function createStream(patterns, options, fn) {
     stream.end();
   });
 
-  return outputstream;
+  return src(stream);
 }
 
 /**
