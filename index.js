@@ -1,18 +1,10 @@
 'use strict';
 
-var fs = require('graceful-fs');
-var path = require('path');
-var async = require('async');
 var globby = require('globby');
-var parent = require('glob-parent');
 var extend = require('extend-shallow');
-// var symlinks = require('file-symlinks');
-// var contents = require('file-contents');
-// var stats = require('file-stats');
 var src = require('src-stream');
 var isValidGlob = require('is-valid-glob');
 var through = require('through2');
-var File = require('vinyl');
 var utils = require('./lib/utils');
 
 /**
@@ -73,15 +65,7 @@ function createStream(patterns, options, fn) {
   }
 
   // make our pipeline of plugins
-  stream = fn(stream, opts)
-    // .pipe(utils.toVinyl())
-    // .pipe(utils.toFile(patterns, opts))
-    // .pipe(utils.toFileObject(patterns, opts))
-    // .pipe(symlinks(opts))
-    // .pipe(stats(opts))
-    // .pipe(contents(opts))
-    // .pipe(fn(opts))
-    // .on('data', console.log);
+  stream = fn(stream, opts);
 
   // find the files and write them to the stream
   globby(patterns, function (err, files) {
