@@ -15,7 +15,7 @@ var gulp = require('gulp');
 var File = require('vinyl');
 var vfs = require('vinyl-fs');
 var dest = require('dest');
-var del = require('del');
+var rimraf = require('rimraf');
 
 // var contents = require('file-contents');
 var utils = require('../lib/utils');
@@ -139,7 +139,7 @@ describe('loader', function () {
       .pipe(dest('actual'))
       .on('end', function() {
         assert.equal(Object.keys(files).length > 1, true);
-        del('actual', done);
+        rimraf('actual', done);
       });
   });
 

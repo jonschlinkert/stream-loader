@@ -1,7 +1,7 @@
 'use strict';
 
-var del = require('del');
+var rimraf = require('rimraf');
 
-del('actual/**', function (err) {
+rimraf('actual', function (err) {
   if (err) console.error(err);
 });
