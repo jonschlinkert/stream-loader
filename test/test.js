@@ -17,7 +17,8 @@ var vfs = require('vinyl-fs');
 var dest = require('dest');
 var rimraf = require('rimraf');
 
-// var contents = require('file-contents');
+var contents = require('file-contents');
+var symlinks = require('file-symlinks');
 var utils = require('../lib/utils');
 var loader = require('../');
 
@@ -89,7 +90,107 @@ describe('loader', function () {
       .pipe(utils.drain(done));
   });
 
-  it('should add the contents property to a file object:', function (done) {
+  it('should support chaining src streams:', function (done) {
+    var src = loader();
+
+    var a = [], b = [], c = [];
+
+    src('fixtures/*.txt')
+      .pipe(through.obj(function (file, enc, cb) {
+        a.push(file.path);
+        this.push(file);
+        cb();
+      }))
+      .pipe(src('fixtures/*.md'))
+      .pipe(through.obj(function (file, enc, cb) {
+        b.push(file.path);
+        this.push(file);
+        cb();
+      }))
+      .pipe(src('fixtures/*.js'))
+      .pipe(through.obj(function (file, enc, cb) {
+        c.push(file.path);
+        this.push(file);
+        cb();
+      }))
+      .on('end', function () {
+        assert.equal(a.length, 3);
+        assert.equal(b.length, 6);
+        assert.equal(c.length, 9);
+      })
+      .pipe(utils.drain(done));
+  });
+
+  it('should support chaining src streams:', function (done) {
+    var src = loader(function (stream, options) {
+      return stream
+        .pipe(symlinks({realpath: false}))
+        .pipe(contents())
+    });
+    var a = [], b = [], c = [];
+
+    src('fixtures/*.txt')
+      .pipe(through.obj(function (file, enc, cb) {
+        a.push(file.path);
+        this.push(file);
+        cb();
+      }))
+      .pipe(src('fixtures/*.md'))
+      .pipe(through.obj(function (file, enc, cb) {
+        b.push(file.path);
+        this.push(file);
+        cb();
+      }))
+      .pipe(src('fixtures/*.js'))
+      .pipe(through.obj(function (file, enc, cb) {
+        c.push(file.path);
+        this.push(file);
+        cb();
+      }))
+      .on('end', function () {
+        assert.equal(a.length, 3);
+        assert.equal(b.length, 6);
+        assert.equal(c.length, 9);
+      })
+      .pipe(utils.drain(done));
+  });
+
+  it('should support plugins used in the loader:', function (done) {
+    var src = loader(function (stream, options) {
+      return stream
+        .pipe(symlinks({realpath: false}))
+        .pipe(contents())
+    });
+
+    var a = [], b = [], c = [];
+
+    src('fixtures/*.txt')
+      .pipe(through.obj(function (file, enc, cb) {
+        a.push(file.path);
+        this.push(file);
+        cb();
+      }))
+      .pipe(src('fixtures/*.md'))
+      .pipe(through.obj(function (file, enc, cb) {
+        b.push(file.path);
+        this.push(file);
+        cb();
+      }))
+      .pipe(src('fixtures/*.js'))
+      .pipe(through.obj(function (file, enc, cb) {
+        c.push(file.path);
+        this.push(file);
+        cb();
+      }))
+      .on('end', function () {
+        assert.equal(a.length, 3);
+        assert.equal(b.length, 6);
+        assert.equal(c.length, 9);
+      })
+      .pipe(utils.drain(done));
+  });
+
+  it('should use plugins in the loader:', function (done) {
     this.timeout(5000);
 
     var src = loader({read: true}, function (stream, opts) {
@@ -106,7 +207,6 @@ describe('loader', function () {
       .pipe(src('fixtures/**/*.txt'))
       .pipe(src('fixtures/**/*.md'))
       .pipe(src('fixtures/**/*.js'))
-      // .pipe(contents({read: false}))
       .pipe(through.obj(function (file, enc, cb) {
         i++;
         this.push(file);
