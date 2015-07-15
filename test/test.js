@@ -27,12 +27,7 @@ describe('loader', function () {
   });
 
   it('should read a glob of files:', function (done) {
-    var src = loader(function (options) {
-      return through.obj(function (file, enc, cb) {
-        this.push(file);
-        return cb();
-      })
-    });
+    var src = loader();
 
     src('fixtures/*.txt')
       .pipe(through.obj(function (file, enc, cb) {
@@ -45,12 +40,7 @@ describe('loader', function () {
   });
 
   it('should pass options to `glob`:', function (done) {
-    var src = loader(function (options) {
-      return through.obj(function (file, enc, cb) {
-        this.push(file);
-        return cb();
-      });
-    });
+    var src = loader();
 
     src('*.txt', {cwd: 'fixtures'})
       .pipe(through.obj(function (file, enc, cb) {
@@ -63,12 +53,13 @@ describe('loader', function () {
   });
 
   it('should take a callback on the loader:', function (done) {
-    var src = loader(function (options) {
-      return through.obj(function (file, enc, cb) {
-        file.foo = 'bar';
-        this.push(utils.toVinyl(file));
-        return cb();
-      })
+    var src = loader(function (stream, options) {
+      return stream
+        .pipe(through.obj(function (file, enc, cb) {
+          file.foo = 'bar';
+          this.push(utils.toVinyl(file));
+          return cb();
+        }));
     });
 
     src('fixtures/*.txt')
@@ -81,11 +72,12 @@ describe('loader', function () {
   });
 
   it('should convert the file to a vinyl File object:', function (done) {
-    var src = loader(function (options) {
-      return through.obj(function (file, enc, cb) {
-        this.push(utils.toVinyl(file));
-        return cb();
-      })
+    var src = loader(function (stream, options) {
+      return stream
+        .pipe(through.obj(function (file, enc, cb) {
+          this.push(utils.toVinyl(file));
+          return cb();
+        }));
     });
 
     src('fixtures/*.txt')
@@ -100,8 +92,8 @@ describe('loader', function () {
   it('should add the contents property to a file object:', function (done) {
     this.timeout(5000);
 
-    var src = loader({read: true}, function (opts) {
-      return utils.base(opts, function (file, options) {
+    var src = loader({read: true}, function (stream, opts) {
+      return utils.base(stream, opts, function (file, options) {
         return utils.toVinyl(file, options);
       });
     });
@@ -127,11 +119,12 @@ describe('loader', function () {
   });
 
   it('should push files into a vinyl src stream:', function (done) {
-    var src = loader(function (options) {
-      return through.obj(function (file, enc, cb) {
-        this.push(utils.toVinyl(file));
-        return cb();
-      })
+    var src = loader(function (stream, options) {
+      return stream
+        .pipe(through.obj(function (file, enc, cb) {
+          this.push(utils.toVinyl(file));
+          return cb();
+        }));
     });
 
     var files = {};
@@ -151,12 +144,7 @@ describe('loader', function () {
   });
 
   it('should passthrough files when no pattern is given', function (done) {
-    var src = loader(function (options) {
-      return through.obj(function (file, enc, cb) {
-        this.push(file);
-        return cb();
-      })
-    });
+    var src = loader();
 
     var files1 = [], files2 = [];
     src('fixtures/*.txt')

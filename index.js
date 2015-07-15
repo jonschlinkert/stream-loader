@@ -73,14 +73,14 @@ function createStream(patterns, options, fn) {
   }
 
   // make our pipeline of plugins
-  stream = stream
+  stream = fn(stream, opts)
     // .pipe(utils.toVinyl())
     // .pipe(utils.toFile(patterns, opts))
     // .pipe(utils.toFileObject(patterns, opts))
     // .pipe(symlinks(opts))
     // .pipe(stats(opts))
     // .pipe(contents(opts))
-    .pipe(fn(opts))
+    // .pipe(fn(opts))
     // .on('data', console.log);
 
   // find the files and write them to the stream
