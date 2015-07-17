@@ -8,12 +8,10 @@
 'use strict';
 
 /* deps: mocha */
-var path = require('path');
 var assert = require('assert');
 var through = require('through2');
 var gulp = require('gulp');
 var File = require('vinyl');
-var vfs = require('vinyl-fs');
 var dest = require('dest');
 var rimraf = require('rimraf');
 
@@ -30,7 +28,7 @@ describe('loader', function () {
   it('should read a glob of files:', function (done) {
     var src = loader();
 
-    src('fixtures/*.txt')
+    src('test/fixtures/*.txt')
       .pipe(through.obj(function (file, enc, cb) {
         assert.equal(typeof file.path, 'string');
         assert.equal(Buffer.isBuffer(file.contents), false);
@@ -63,7 +61,7 @@ describe('loader', function () {
         }));
     });
 
-    src('fixtures/*.txt')
+    src('test/fixtures/*.txt')
       .pipe(through.obj(function (file, enc, cb) {
         assert.equal(file.foo, 'bar');
         this.push(file);
@@ -81,7 +79,7 @@ describe('loader', function () {
         }));
     });
 
-    src('fixtures/*.txt')
+    src('test/fixtures/*.txt')
       .pipe(through.obj(function (file, enc, cb) {
         assert.equal(file instanceof File, true);
         this.push(file);
@@ -95,19 +93,19 @@ describe('loader', function () {
 
     var a = [], b = [], c = [];
 
-    src('fixtures/*.txt')
+    src('test/fixtures/*.txt')
       .pipe(through.obj(function (file, enc, cb) {
         a.push(file.path);
         this.push(file);
         cb();
       }))
-      .pipe(src('fixtures/*.md'))
+      .pipe(src('test/fixtures/*.md'))
       .pipe(through.obj(function (file, enc, cb) {
         b.push(file.path);
         this.push(file);
         cb();
       }))
-      .pipe(src('fixtures/*.js'))
+      .pipe(src('test/fixtures/*.js'))
       .pipe(through.obj(function (file, enc, cb) {
         c.push(file.path);
         this.push(file);
@@ -130,19 +128,19 @@ describe('loader', function () {
 
     var a = [], b = [], c = [];
 
-    src('fixtures/*.txt')
+    src('test/fixtures/*.txt')
       .pipe(through.obj(function (file, enc, cb) {
         a.push(file.path);
         this.push(file);
         cb();
       }))
-      .pipe(src('fixtures/*.md'))
+      .pipe(src('test/fixtures/*.md'))
       .pipe(through.obj(function (file, enc, cb) {
         b.push(file.path);
         this.push(file);
         cb();
       }))
-      .pipe(src('fixtures/*.js'))
+      .pipe(src('test/fixtures/*.js'))
       .pipe(through.obj(function (file, enc, cb) {
         c.push(file.path);
         this.push(file);
@@ -169,10 +167,10 @@ describe('loader', function () {
 
     src('node_modules/**/*')
       .pipe(src('lib/**/*.js'))
-      .pipe(src('fixtures/*.txt'))
-      .pipe(src('fixtures/**/*.txt'))
-      .pipe(src('fixtures/**/*.md'))
-      .pipe(src('fixtures/**/*.js'))
+      .pipe(src('test/fixtures/*.txt'))
+      .pipe(src('test/fixtures/**/*.txt'))
+      .pipe(src('test/fixtures/**/*.md'))
+      .pipe(src('test/fixtures/**/*.js'))
       .pipe(through.obj(function (file, enc, cb) {
         i++;
         this.push(file);
@@ -195,8 +193,8 @@ describe('loader', function () {
 
     var files = {};
     gulp.src('*.js')
-      .pipe(src('fixtures/*.txt'))
-      .pipe(src('fixtures/*.md'))
+      .pipe(src('test/fixtures/*.txt'))
+      .pipe(src('test/fixtures/*.md'))
       .pipe(through.obj(function (file, enc, cb) {
         files[file.path] = file;
         this.push(file);
@@ -213,7 +211,7 @@ describe('loader', function () {
     var src = loader();
 
     var files1 = [], files2 = [];
-    src('fixtures/*.txt')
+    src('test/fixtures/*.txt')
       .pipe(through.obj(function (file, enc, cb) {
         files1.push(file);
         cb(null, file);
