@@ -1,5 +1,7 @@
 'use strict';
 
+var fs = require('graceful-fs');
+var File = require('vinyl');
 var globby = require('globby');
 var extend = require('extend-shallow');
 var src = require('src-stream');
@@ -16,30 +18,30 @@ var utils = require('./lib/utils');
  * @return {Function} Function for loading a glob of files.
  */
 
-function streamLoader(config, fn) {
+function streamLoader(config, pipeline) {
   if (typeof config === 'function') {
-    fn = config; config = {};
+    pipeline = config; config = {};
   }
 
-  fn = fn || utils.base;
+  pipeline = pipeline || utils.base;
 
   return function (patterns, options) {
     var opts = extend({ loader: config }, options);
-    return createStream(patterns, opts, fn);
+    return createStream(patterns, opts, pipeline);
   };
 }
 
 /**
  * Create a src stream from the given glob `patterns`,
- * `options` and optional transform `fn`.
+ * `options` and optional transform `pipeline`.
  *
  * @param  {String|Array} `patterns` Glob patterns
  * @param  {Object} `options` Options to pass to [globby]
- * @param  {Function} `fn` The loader callback, can be thought of as a transform function.
+ * @param  {Function} `pipeline` The loader callback, can be thought of as a transform function.
  * @return {Stream}
  */
 
-function createStream(patterns, options, fn) {
+function createStream(patterns, options, pipeline) {
   var opts = extend({}, options.loader, options);
   opts.cwd = opts.cwd || process.cwd();
 
@@ -49,8 +51,8 @@ function createStream(patterns, options, fn) {
 
   // if a loader callback is passed, bind the stream
   // and remove maxListeners
-  if (typeof fn === 'function') {
-    fn = fn.bind(stream);
+  if (typeof pipeline === 'function') {
+    pipeline = pipeline.bind(stream);
   }
 
   // if no patterns were actually passed, allow the next
@@ -65,14 +67,22 @@ function createStream(patterns, options, fn) {
   }
 
   // make our pipeline of plugins
-  stream = fn(stream, opts);
+  stream = pipeline(stream, opts);
 
   // find the files and write them to the stream
   globby(patterns, function (err, files) {
     if (err) return stream.emit('error', err);
-    var len = files.length, i = 0;
-    while (len--) {
-      stream.write(utils.toFile(files[i++], patterns, opts));
+    var len = files.length, i = -1;
+    while (++i < len) {
+      var fp = files[i];
+      var stat = fs.statSync(fp);
+      if (stat.isFile()) {
+        stream.write(new File({
+          path: fp,
+          contents: fs.readFileSync(fp),
+          stat: stat
+        }));
+      }
     }
     stream.end();
   });
