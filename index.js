@@ -74,15 +74,7 @@ function createStream(patterns, options, pipeline) {
     if (err) return stream.emit('error', err);
     var len = files.length, i = -1;
     while (++i < len) {
-      var fp = files[i];
-      var stat = fs.statSync(fp);
-      if (stat.isFile()) {
-        stream.write(new File({
-          path: fp,
-          contents: fs.readFileSync(fp),
-          stat: stat
-        }));
-      }
+      stream.write(new File({path: files[i], contents: null}));
     }
     stream.end();
   });
