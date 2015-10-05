@@ -1,7 +1,7 @@
 {
   "name": "stream-loader",
   "description": "create a read stream from a glob of files. can be used as a loader-cache loader, or by itself as an a-la-carte replacement or addition to vinyl src.",
-  "version": "0.1.2",
+  "version": "0.1.1",
   "homepage": "https://github.com/jonschlinkert/stream-loader",
   "author": "Jon Schlinkert (https://github.com/jonschlinkert)",
   "repository": "jonschlinkert/stream-loader",
@@ -23,26 +23,26 @@
   "dependencies": {
     "extend-shallow": "^2.0.1",
     "glob-parent": "^2.0.0",
-    "globby": "^3.0.1",
+    "globby": "^2.0.0",
+    "graceful-fs": "^4.1.2",
     "is-extendable": "^0.1.1",
     "is-valid-glob": "^0.3.0",
     "mixin-object": "^2.0.1",
     "src-stream": "^0.1.1",
-    "through2": "^2.0.0"
+    "through2": "^2.0.0",
+    "vinyl": "^1.0.0"
   },
   "devDependencies": {
     "async": "^1.4.2",
-    "dest": "^0.1.1",
-    "file-contents": "^0.1.1",
+    "dest": "^0.2.1",
+    "file-contents": "^0.2.0",
     "file-symlinks": "^0.1.0",
-    "graceful-fs": "^4.1.2",
     "gulp": "^3.9.0",
-    "gulp-jshint": "^1.11.1",
+    "gulp-jshint": "^1.11.2",
     "jshint-stylish": "^2.0.1",
-    "mocha": "^2.2.5",
-    "rimraf": "^2.4.1",
-    "template": "jonschlinkert/template#complete-refactor",
-    "vinyl": "^0.5.0"
+    "mocha": "^2.3.3",
+    "rimraf": "^2.4.3",
+    "template": "^0.17.3"
   },
   "keywords": [
     "async",
