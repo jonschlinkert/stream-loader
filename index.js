@@ -74,7 +74,7 @@ function createStream(patterns, options, pipeline) {
     if (err) return stream.emit('error', err);
     var len = files.length, i = -1;
     while (++i < len) {
-      stream.write(new File({path: files[i], contents: null}));
+      stream.write(utils.toFile(files[i], patterns, opts));
     }
     stream.end();
   });
