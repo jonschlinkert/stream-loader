@@ -70,7 +70,7 @@ function createStream(patterns, options, pipeline) {
   stream = pipeline(stream, opts);
 
   // find the files and write them to the stream
-  globby(patterns, function (err, files) {
+  globby(patterns, opts, function (err, files) {
     if (err) return stream.emit('error', err);
     var len = files.length, i = -1;
     while (++i < len) {
