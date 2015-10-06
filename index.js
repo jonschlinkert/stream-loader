@@ -52,9 +52,8 @@ function createStream(patterns, options, pipeline) {
   }
 
   stream = pipeline(stream, opts);
-  var opt = utils.extend({}, opts);
 
-  glob(patterns, opt, function (err, files) {
+  glob(patterns, opts, function (err, files) {
     if (err) return stream.emit('error', err);
     var len = files.length, i = -1;
     while (++i < len) {

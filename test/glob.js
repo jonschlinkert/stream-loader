@@ -25,27 +25,31 @@ describe('glob', function () {
       glob('*.txt', {cwd: 'test/fixtures'}, function(err, files) {
         assert(!err);
         assert(files);
-        assert(files.length > 1);
+        assert(files.length);
         done();
       });
     });
 
     it('should take ignore patterns', function(done) {
-      glob('*.js', {ignore: ['*.js']}, function(err, files) {
+      var opts = {cwd: 'test/fixtures', ignore: ['*.js']};
+      glob(['*.*'], opts, function(err, files) {
         assert(!err);
         assert(files);
-        assert(files.length === 0);
+        assert(files.length);
+        assert(~files.indexOf('a.md'));
+        assert(!~files.indexOf('a.js'));
         done();
       });
     });
 
     it('should take negation patterns', function(done) {
-      glob(['*.js', '!gulpfile.js'], function(err, files) {
+      var opts = {cwd: 'test/fixtures'};
+      glob(['*.*', '!*.js'], opts, function(err, files) {
         assert(!err);
         assert(files);
-        assert(files.length > 1);
-        assert(files.indexOf('example.js') > -1);
-        assert(files.indexOf('gulpfile.js') === -1);
+        assert(files.length);
+        assert(~files.indexOf('a.md'));
+        assert(!~files.indexOf('a.js'));
         done();
       });
     });
