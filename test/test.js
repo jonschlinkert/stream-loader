@@ -1,31 +1,27 @@
-/*!
- * stream-loader <https://github.com/jonschlinkert/stream-loader>
- *
- * Copyright (c) 2015, Jon Schlinkert.
- * Licensed under the MIT license.
- */
-
 'use strict';
 
-/* deps: mocha */
+require('mocha');
 var assert = require('assert');
 var through = require('through2');
 var gulp = require('gulp');
 var File = require('vinyl');
 var dest = require('dest');
 var rimraf = require('rimraf');
-
 var contents = require('file-contents');
 var symlinks = require('file-symlinks');
-var utils = require('../lib/utils');
+
 var loader = require('../');
+var utils = require('../lib/utils');
+var support = require('./support');
+var toVinyl = support.toVinyl;
+var drain = support.drain;
 
 describe('loader', function () {
   it('should return a function:', function () {
     assert.equal(typeof loader(), 'function');
   });
 
-  it('should read a glob of files:', function (done) {
+  it('should support globs as strings:', function (done) {
     var src = loader();
 
     src('test/fixtures/*.txt')
@@ -35,7 +31,20 @@ describe('loader', function () {
         this.push(file);
         cb();
       }))
-      .pipe(utils.drain(done));
+      .pipe(drain(done));
+  });
+
+  it('should support globs as arrays:', function (done) {
+    var src = loader();
+
+    src(['test/fixtures/*.txt', 'test/fixtures/*.md'])
+      .pipe(through.obj(function (file, enc, cb) {
+        assert.equal(typeof file.path, 'string');
+        assert.equal(Buffer.isBuffer(file.contents), false);
+        this.push(file);
+        cb();
+      }))
+      .pipe(drain(done));
   });
 
   it('should pass options to `glob`:', function (done) {
@@ -48,7 +57,7 @@ describe('loader', function () {
         this.push(file);
         cb();
       }))
-      .pipe(utils.drain(done));
+      .pipe(drain(done));
   });
 
   it('should take a callback on the loader:', function (done) {
@@ -56,7 +65,7 @@ describe('loader', function () {
       return stream
         .pipe(through.obj(function (file, enc, cb) {
           file.foo = 'bar';
-          this.push(utils.toVinyl(file));
+          this.push(toVinyl(file));
           return cb();
         }));
     });
@@ -67,14 +76,14 @@ describe('loader', function () {
         this.push(file);
         cb();
       }))
-      .pipe(utils.drain(done));
+      .pipe(drain(done));
   });
 
   it('should convert the file to a vinyl File object:', function (done) {
     var src = loader(function (stream, options) {
       return stream
         .pipe(through.obj(function (file, enc, cb) {
-          this.push(utils.toVinyl(file));
+          this.push(toVinyl(file));
           return cb();
         }));
     });
@@ -85,7 +94,7 @@ describe('loader', function () {
         this.push(file);
         cb();
       }))
-      .pipe(utils.drain(done));
+      .pipe(drain(done));
   });
 
   it('should support chaining src streams:', function (done) {
@@ -116,14 +125,20 @@ describe('loader', function () {
         assert.equal(b.length, 6);
         assert.equal(c.length, 9);
       })
-      .pipe(utils.drain(done));
+      .pipe(drain(done));
   });
 
   it('should support plugins used in the loader:', function (done) {
     var src = loader(function (stream, options) {
-      return stream
-        .pipe(symlinks({realpath: false}))
+      var pass = through.obj()
         .pipe(contents())
+        .pipe(through.obj(function (file, enc, next) {
+          // console.log(file.path);
+          next(null, file);
+        }))
+
+      stream.pipe(pass);
+      return stream;
     });
 
     var a = [], b = [], c = [];
@@ -151,7 +166,7 @@ describe('loader', function () {
         assert.equal(b.length, 6);
         assert.equal(c.length, 9);
       })
-      .pipe(utils.drain(done));
+      .pipe(drain(done));
   });
 
   it('should use plugins in the loader:', function (done) {
@@ -159,7 +174,7 @@ describe('loader', function () {
 
     var src = loader({read: true}, function (stream, opts) {
       return utils.base(stream, opts, function (file, options) {
-        return utils.toVinyl(file, options);
+        return toVinyl(file, options);
       });
     });
 
@@ -179,14 +194,14 @@ describe('loader', function () {
       .on('end', function () {
         console.log('read', i, 'files');
       })
-      .pipe(utils.drain(done));
+      .pipe(drain(done));
   });
 
   it('should push files into a vinyl src stream:', function (done) {
     var src = loader(function (stream, options) {
       return stream
         .pipe(through.obj(function (file, enc, cb) {
-          this.push(utils.toVinyl(file));
+          this.push(toVinyl(file));
           return cb();
         }));
     });
@@ -224,6 +239,6 @@ describe('loader', function () {
       .on('end', function () {
         assert.deepEqual(files1, files2);
       })
-      .pipe(utils.drain(done));
+      .pipe(drain(done));
   });
 });
