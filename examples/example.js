@@ -18,7 +18,7 @@ var src = loader(function (options) {
 });
 
 src('*.js')
-  .pipe(src('*.js'))
+  .pipe(src('tmp/*.js'))
   .pipe(src('fixtures/*.txt'))
   .pipe(src('fixtures/*.md'))
   .pipe(contents())

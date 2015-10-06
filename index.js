@@ -1,7 +1,8 @@
 'use strict';
 
 var utils = require('./lib/utils');
-var glob = require('./lib/glob');
+var glob = require('./lib/stream');
+// var glob = require('./lib/glob');
 
 /**
  * Stream loader that returns a function for creating a stream
@@ -51,18 +52,25 @@ function createStream(patterns, options, pipeline) {
     return utils.src(stream);
   }
 
-  stream = pipeline(stream, opts);
+  stream = utils.src(pipeline(stream, opts));
+  var globs = glob.stream(patterns, opts);
+  var outputstream = utils.src(utils.combine([globs, stream]));
 
-  glob(patterns, opts, function (err, files) {
-    if (err) return stream.emit('error', err);
-    var len = files.length, i = -1;
-    while (++i < len) {
-      stream.write(utils.toFile(files[i], patterns, opts));
-    }
-    stream.end();
+  globs.on('end', function () {
+    console.log('glob ended');
+    setImmediate(outputstream.end.bind(outputstream));
   });
 
-  return utils.src(stream);
+  // glob(patterns, opts, function (err, files) {
+  //   if (err) return stream.emit('error', err);
+  //   var len = files.length, i = -1;
+  //   while (++i < len) {
+  //     stream.write(utils.toFile(files[i], patterns, opts));
+  //   }
+  //   stream.end();
+  // });
+
+  return outputstream;
 }
 
 /**

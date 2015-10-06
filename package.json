@@ -30,7 +30,10 @@
     "glob-parent": "^2.0.0",
     "is-valid-glob": "^0.3.0",
     "lazy-cache": "^0.2.3",
+    "map-cache": "^0.2.0",
+    "merge-stream": "^1.0.0",
     "src-stream": "^0.1.1",
+    "stream-combiner": "^0.2.2",
     "through2": "^2.0.0",
     "vinyl": "^1.0.0"
   },
